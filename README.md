@@ -16,8 +16,10 @@ PWAとしてiPhoneのホーム画面に追加すると、オフラインでも�
 ├── index.html        アプリ本体（CSS・JS・単語データ SEEDS を内蔵）
 ├── manifest.json     PWA設定（名前・アイコン・表示方法）
 ├── sw.js             Service Worker（オフライン用キャッシュ）
-├── icons/            ホーム画面用アイコン（180・192・512px）
-├── tools/check.js    読み込みテスト（各セクションの語数を点検）
+├── icon-180.png      ホーム画面用アイコン
+├── icon-192.png      同上
+├── icon-512.png      同上
+├── check.js          読み込みテスト（各セクションの語数を点検）
 ├── .gitignore
 └── README.md
 ```
@@ -33,7 +35,7 @@ PWAとしてiPhoneのホーム画面に追加すると、オフラインでも�
 
 ## 更新するとき
 1. 変更したファイルを同じリポジトリに上書きアップロード
-2. `sw.js` の先頭にある `kinphrase-v2` の番号を上げる（上げないと古い版が使われ続けます）
+2. `sw.js` の先頭にある `kinphrase-v3` の番号を上げる（上げないと古い版が使われ続けます）
 3. iPhoneはネットにつながった状態で、アプリを開き直す
 
 ## データの保存について
@@ -43,7 +45,7 @@ PWAとしてiPhoneのホーム画面に追加すると、オフラインでも�
 
 ## 点検
 ```
-node tools/check.js index.html
+node check.js index.html
 ```
 結果は `out.txt` に出ます（セクション名・語数・最初と最後の番号・例文数・派生語数・TOTAL）。
 
