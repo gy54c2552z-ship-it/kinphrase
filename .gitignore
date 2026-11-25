@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+# Editors
+.vscode/
+.idea/
+*.swp
+# Node / tool outputs
+node_modules/
+out.txt
+# Backups of progress (personal data)
+*.bak
+backup*.json
+kinphrase_backup*
