@@ -3,14 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e5f"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <title>金のフレーズ 単語カード</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="金のフレーズ">
-<meta name="theme-color" content="#0f766e">
-
 <style>
 :root{--bg:#f6f3ec;--sf:#fffdf8;--tx:#1d2a33;--mu:#6b7780;--ln:#ddd6c6;--ac:#1f4e5f;--ac2:#fff;--ok:#2d7a4f;--ng:#b5432f;--gd:#b8892b;--t1:#cfe9e6;--t2:#8fcfc8;--t3:#2a9d94;--t4:#e3b53f;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -70,6 +64,9 @@ button:disabled{opacity:.4;cursor:default}
 </head>
 <body>
 <div id="app"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 var KEY='kinphrase_v1',LIMIT=5000,TH=0.75;
 var MODES={w:'単語',e:'例文',dp:'派生語①　動・名・形・副・前・接',dr:'派生語②　類・同・反・関・例・略・複',all:'すべてまとめて'};
@@ -135,7 +132,7 @@ w.en=w.en.trim();w.no=no;if(!w.en||!w.ja)return;
 if(upsert(s,w)==='add')add++;else upd++});
 s.words.sort(function(a,b){return (a.no||1e9)-(b.no||1e9)});return{add:add,upd:upd}}
 
-function render(){var a=document.getElementById('app'),f=R[V.name];a.innerHTML=f();if(V.name==='card'&&!V.rev)startTimer()}
+function render(){var a=document.getElementById('app'),f=R[V.name];a.innerHTML=f();if(V.name==='card'&&!V.rev){startTimer();if(AUTO())spk('f')}else if(V.name!=='card')spkStop()}
 var R={};
 R.home=function(){
 var h='<h1>金のフレーズ</h1><div class="sub">TOEIC 単語カード</div>';
@@ -160,7 +157,7 @@ R.addw=function(){return '<button class="link" data-a="sec" data-i="'+V.id+'">�
 R.setup=function(){var all=items(V.id,V.mode,V.scope),rv=all.filter(function(i){return status(i.k)!=='done'}),o='';
 [10,20,50,100].forEach(function(n){o+='<button data-a="cnt" data-n="'+n+'" class="'+(V.cnt===n?'sel':'')+'">'+n+'問</button>'});
 var rng=V.id==='mis'?'':'<div class="sub">出題範囲</div><div class="two" style="margin:8px 0 16px"><button data-a="md" data-m="all" class="'+(V.md==='all'?'sel':'')+'">すべて ('+all.length+')</button><button data-a="md" data-m="rev" class="'+(V.md==='rev'?'sel':'')+'">要復習・未学習 ('+rv.length+')</button></div>';
-return '<button class="link" data-a="back">‹ 戻る</button><h2>'+esc(secTitle(V.id,V.scope))+'</h2><div class="sub" style="margin-bottom:12px">'+MODES[V.mode]+'</div><div class="sub">問題数</div><div class="grid4" style="margin:8px 0 16px">'+o+'</div>'+rng+'<div class="sub">毎回シャッフルされます。開始の3秒前からカウントダウンします。'+(V.mode==='e'?'例文は時間制限なしです。':V.mode==='all'?'例文以外は、1問5秒以内に「解説へ」を押せないと「わからない」になります。':'1問5秒以内に「解説へ」を押せないと「わからない」になります。')+'</div><button class="pri full" data-a="start" style="margin-top:16px">スタート</button>'+(V.err?'<div class="sub" style="color:var(--ng)">'+V.err+'</div>':'')};
+return '<button class="link" data-a="back">‹ 戻る</button><h2>'+esc(secTitle(V.id,V.scope))+'</h2><div class="sub" style="margin-bottom:12px">'+MODES[V.mode]+'</div><div class="sub">問題数</div><div class="grid4" style="margin:8px 0 16px">'+o+'</div>'+rng+'<div class="sub">毎回シャッフルされます。開始の3秒前からカウントダウンします。'+(V.mode==='e'?'例文は時間制限なしです。':V.mode==='all'?'例文以外は、1問5秒以内に「解説へ」を押せないと「わからない」になります。':'1問5秒以内に「解説へ」を押せないと「わからない」になります。')+'</div><button class="full" data-a="auto" style="margin-top:16px">'+autoLabel()+'</button><button class="pri full" data-a="start" style="margin-top:8px">スタート</button>'+(V.err?'<div class="sub" style="color:var(--ng)">'+V.err+'</div>':'')};
 R.count=function(){return '<div class="cd" id="cd">'+V.n+'</div><div class="sub st">準備してください</div>'};
 R.card=function(){var it=V.q[V.i],w=it.w,last=V.i+1>=V.q.length,front,back='';
 if(it.kind==='w'){front='<div class="en">'+esc(w.en)+'</div><div class="pos">'+esc(w.pos)+'</div>';
@@ -171,9 +168,9 @@ back='<div class="box"><b>和訳</b><div>'+rd(w.exja)+'</div></div><div class="b
 else{front='<div class="en" style="font-size:32px">'+esc(it.d.en)+'</div>';
 var oth=(w.der||[]).filter(function(x){return x!==it.d});
 back='<div class="box"><div class="ja">'+esc(it.d.ja)+'</div><div class="sub">この派生語の種類：<span class="tag" style="margin:0">'+esc(it.d.t)+'</span></div></div><div class="box"><b>元の単語</b><div><b>'+esc(w.en)+'</b></div>'+jaH(w)+'</div><div class="box"><b>この単語のほかの派生語</b>'+(oth.length?oth.map(function(x){return '<div class="wl"><span class="tag" style="margin:0 6px 0 0">'+esc(x.t)+'</span><b>'+esc(x.en)+'</b>　'+esc(x.ja)+'</div>'}).join(''):'<div class="sub">なし</div>')+'</div>'}
-var h='<div class="row sp sub"><span>'+(V.i+1)+' / '+V.q.length+'</span><button class="link" data-a="quit">中止</button></div><div class="tm"'+(V.rev||it.kind==='e'?' style="visibility:hidden"':'')+'><i id="tb"></i></div><div class="card" style="padding:'+(it.kind==='e'?'28':'40')+'px 16px">'+front+'</div>';
+var h='<div class="row sp sub"><span>'+(V.i+1)+' / '+V.q.length+'</span><button class="link" data-a="auto" data-c="1">'+autoLabel(1)+'</button><button class="link" data-a="quit">中止</button></div><div class="tm"'+(V.rev||it.kind==='e'?' style="visibility:hidden"':'')+'><i id="tb"></i></div><div class="card" style="padding:'+(it.kind==='e'?'28':'40')+'px 16px">'+front+'</div>';
 if(!V.rev)return h+'<button class="pri full" data-a="reveal" style="padding:18px;font-size:17px">解説へ</button>';
-h+=(V.done?'<div class="res x">時間切れ（自動で「わからない」にしました）</div>':'')+back;
+h+=(V.done?'<div class="res x">時間切れ（自動で「わからない」にしました）</div>':'')+spkRow(it)+back;
 if(V.done)return h+'<button class="pri full" data-a="next">'+(last?'結果を見る':'次の問題へ')+'</button>';
 return h+'<div class="sub" style="margin-top:12px">解説を見る前に、意味を思い出せていましたか？</div><div class="two" style="margin-top:8px"><button class="bng" data-a="ans" data-v="0">× わからない</button><button class="bok" data-a="ans" data-v="1">✓ わかる</button></div>'};
 R.result=function(){var q=V.log,ok=q.filter(function(x){return x.ok}).length,to=q.filter(function(x){return x.to}).length,wrong=q.filter(function(x){return !x.ok}),box;
@@ -191,7 +188,7 @@ if(!L.length)h+='<div class="sub">単語がありません</div>';
 L.forEach(function(w){var t=st(w.id),k=status(w.id);
 h+='<div class="wl"><div class="row sp"><span><b>'+esc(w.en)+'</b><span class="tag">'+(k==='done'?'習得済み':k==='rev'?'要復習':'未学習')+'</span></span><span class="sub">'+(t.seen?pct(t.ok,t.seen)+'%':'―')+'</span></div><div class="sub">'+esc(w.ja)+(t.seen?'　／　'+t.ok+'/'+t.seen+'回'+(t.to?'　時間切れ '+t.to:''):'')+'</div></div>'});
 return h+'</div>'};
-R.backup=function(){return '<button class="link" data-a="home">‹ ホーム</button><h2>データの保存・復元</h2><div id="cl" class="sub">'+clText()+'</div><button class="full" data-a="syncnow">今すぐ同期する</button><div class="sub">進捗はこの端末のブラウザに自動保存されます。端末を変える時や念のためのバックアップには、下の文字列をコピーしてメモなどに保存し、復元時に貼り付けてください。</div><button class="full" data-a="export">バックアップ文字列を表示</button><textarea id="bk" placeholder="ここに表示／貼り付け"></textarea><button class="pri full" data-a="import">貼り付けた内容で復元（現在のデータは置き換わります）</button><div id="msg" class="sub"></div>'};
+R.backup=function(){return '<button class="link" data-a="home">‹ ホーム</button><h2>データの保存・復元</h2><div id="cl">'+auHtml()+'</div><div class="sub">進捗はこの端末のブラウザに自動保存されます。端末を変える時や念のためのバックアップには、下の文字列をコピーしてメモなどに保存し、復元時に貼り付けてください。</div><button class="full" data-a="export">バックアップ文字列を表示</button><textarea id="bk" placeholder="ここに表示／貼り付け"></textarea><button class="pri full" data-a="import">貼り付けた内容で復元（現在のデータは置き換わります）</button><div id="msg" class="sub"></div>'};
 
 function startTimer(){clearInterval(T.iv);var t0=performance.now();V.t0=t0;if(V.q[V.i].kind==='e')return;var b=document.getElementById('tb');
 T.iv=setInterval(function(){var e=performance.now()-t0;if(b)b.style.width=Math.max(0,100-e/LIMIT*100)+'%';if(e>=LIMIT){clearInterval(T.iv);answer(false,true,LIMIT)}},40)}
@@ -222,29 +219,58 @@ else if(a==='start')startCount();
 else if(a==='reveal'){clearInterval(T.iv);V.ms=Math.min(LIMIT*6,performance.now()-V.t0);V.rev=1;render()}
 else if(a==='ans')answer(b.dataset.v==='1',false,V.ms);
 else if(a==='next')adv();
-else if(a==='quit'){clearInterval(T.iv);if(V.log.length){V.name='result';render()}else go(V.id==='mis'?'mis':'sec',{id:V.id,scope:V.scope})}
+else if(a==='quit'){clearInterval(T.iv);spkStop();if(V.log.length){V.name='result';render()}else go(V.id==='mis'?'mis':'sec',{id:V.id,scope:V.scope})}
 else if(a==='words')go('words',{id:V.id,sort:'weak'});
 else if(a==='sort'){V.sort=b.dataset.s;render()}
 else if(a==='del'){if(V.cf){var s2=sec(V.id);s2.words.forEach(function(w){Object.keys(S.stats).forEach(function(k){if(k.indexOf(w.id)===0)delete S.stats[k]})});S.sections=S.sections.filter(function(x){return x.id!==V.id});if(!S.sections.length)S.sections.push({id:'s1',name:'1–100',words:[]});save();go('home')}else{V.cf=1;render()}}
 else if(a==='backup')go('backup');
-else if(a==='syncnow'){if(CL.col){CL.msg='同期中…';clShow();pull(true)}else{clShow()}}
+else if(a==='syncnow'){if(CL.col){CL.msg='同期中…';clShow();pull(true)}}
+else if(a==='login'||a==='signup'||a==='reset'){auAct(a)}
+else if(a==='logout'){if(AUTH)AUTH.signOut()}
+else if(a==='spk'){spk(b.dataset.s)}
+else if(a==='auto'){setAuto(!AUTO());b.textContent=autoLabel(b.dataset.c==='1');if(!AUTO())spkStop()}
 else if(a==='export'){document.getElementById('bk').value=JSON.stringify(S)}
 else if(a==='import'){var m=document.getElementById('msg');try{var d=JSON.parse(document.getElementById('bk').value);if(!d||!d.sections||!d.stats)throw 0;S=d;save();m.textContent='復元しました'}catch(x){m.textContent='読み込めませんでした。バックアップ文字列をそのまま貼り付けてください。'}}
 });
 
-var CL={col:null,t:null,st:'off',msg:''};
-function clText(){if(CL.st==='on')return '☁ Claudeアカウントで同期中（学習記録を自動でクラウドに保存します）'+(CL.msg?'<br>'+CL.msg:'');if(CL.st==='err')return '☁ 同期でエラーが出ました。しばらくしてから「今すぐ同期する」を押してください。'+(CL.msg?'<br>'+CL.msg:'');return '☁ 同期は使えない状態です。claude.ai（またはClaudeアプリ）にログインした状態でこのページを開くと、同じアカウントのどの端末でも進捗が同期されます。'}
-function clShow(){var e=document.getElementById('cl');if(e)e.innerHTML=clText()}
+var FBCFG={apiKey:"AIzaSyDrwb9ZNKdd0Mt0UQgSNxWf_67G1A1RTvg",authDomain:"english-word-5aed6.firebaseapp.com",projectId:"english-word-5aed6",storageBucket:"english-word-5aed6.firebasestorage.app",messagingSenderId:"1082185498383",appId:"1:1082185498383:web:55a3ebc624210d78c8c87a"};
+var CL={col:null,t:null,st:'off',msg:'',user:null,busy:0},AUTH=null;
+var IS='width:100%;font:inherit;font-size:16px;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:10px;margin:4px 0';
+function auHtml(){
+if(typeof firebase==='undefined')return '<div class="sub">☁ ログイン機能を読み込めませんでした。ネットにつながった状態で、一度開き直してください。学習記録はこの端末に保存されています。</div>';
+if(CL.user)return '<div class="sub">☁ ログイン中：'+esc(CL.user)+'<br>学習記録を自動でクラウドに保存します。'+(CL.msg?'<br>'+CL.msg:'')+'</div><button class="full" data-a="syncnow">今すぐ同期する</button><button class="full" data-a="logout">ログアウト</button>';
+return '<div class="sub">☁ メールアドレスとパスワードでログインすると、どの端末でも学習記録が同期されます（初めての方は「新規登録」）。</div><input type="email" id="aem" placeholder="メールアドレス" autocomplete="username" autocapitalize="off" style="'+IS+'"><input type="password" id="apw" placeholder="パスワード（6文字以上）" autocomplete="current-password" style="'+IS+'"><button class="pri full" data-a="login">ログイン</button><button class="full" data-a="signup">新規登録</button><button class="full" data-a="reset">パスワードを忘れた</button><div id="aum" class="sub">'+(CL.msg||'')+'</div>'}
+function auShow(){var e=document.getElementById('cl');if(e)e.innerHTML=auHtml()}
+function clShow(){var e=document.getElementById('cl');if(!e)return;if(!CL.user&&document.getElementById('aem')){var m=document.getElementById('aum');if(m)m.innerHTML=CL.msg||'';return}e.innerHTML=auHtml()}
+function auErr(e){var c=(e&&e.code)||'',m={'auth/invalid-email':'メールアドレスの形式が正しくありません。','auth/missing-email':'メールアドレスを入力してください。','auth/missing-password':'パスワードを入力してください。','auth/weak-password':'パスワードは6文字以上にしてください。','auth/email-already-in-use':'このメールアドレスは登録済みです。「ログイン」を押してください。','auth/invalid-credential':'メールアドレスまたはパスワードが違います。','auth/wrong-password':'メールアドレスまたはパスワードが違います。','auth/user-not-found':'メールアドレスまたはパスワードが違います。','auth/network-request-failed':'通信できませんでした。ネット接続を確認してください。','auth/too-many-requests':'試行回数が多すぎます。しばらく待ってからやり直してください。','auth/operation-not-allowed':'この方法のログインが有効になっていません。'};CL.msg=(m[c]||'エラーが出ました。')+(c?'（'+c+'）':'');clShow()}
+function auAct(a){if(!AUTH)return;var em=(document.getElementById('aem').value||'').trim(),pw=document.getElementById('apw').value||'';CL.msg='通信中…';clShow();
+if(a==='login')AUTH.signInWithEmailAndPassword(em,pw).catch(auErr);
+else if(a==='signup')AUTH.createUserWithEmailAndPassword(em,pw).catch(auErr);
+else AUTH.sendPasswordResetEmail(em).then(function(){CL.msg='再設定メールを送りました。届かないときは迷惑メールフォルダも確認してください。';clShow()}).catch(auErr)}
+
+function AUTO(){try{return localStorage.getItem('kinphrase_snd')!=='0'}catch(e){return true}}
+function setAuto(v){try{localStorage.setItem('kinphrase_snd',v?'1':'0')}catch(e){}}
+function autoLabel(s){return s?'🔊 自動：'+(AUTO()?'オン':'オフ'):'🔊 自動読み上げ：'+(AUTO()?'オン':'オフ')}
+function spkOK(){return typeof window!=='undefined'&&window.speechSynthesis&&typeof SpeechSynthesisUtterance!=='undefined'}
+function spkStop(){if(spkOK())try{speechSynthesis.cancel()}catch(e){}}
+function spkText(k,it){var w=it.w;if(k==='f')k=it.kind==='w'?'w':it.kind==='e'?'e':'d';return k==='w'?w.en:k==='e'?w.ex:(it.d&&it.d.en)||''}
+function spk(k){if(!spkOK())return;var it=V.q&&V.q[V.i];if(!it)return;var t=strip(spkText(k,it)).replace(/\s*\/\s*/g,', ').replace(/[()]/g,'').trim();if(!t)return;
+try{speechSynthesis.cancel();setTimeout(function(){var u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=0.9;var vs=speechSynthesis.getVoices()||[],v=null,i;for(i=0;i<vs.length&&!v;i++)if(/^en[-_]US/i.test(vs[i].lang)&&/Samantha|Google US|Aaron|Nicky|Allison|Ava/i.test(vs[i].name))v=vs[i];for(i=0;i<vs.length&&!v;i++)if(/^en[-_]US/i.test(vs[i].lang))v=vs[i];for(i=0;i<vs.length&&!v;i++)if(/^en/i.test(vs[i].lang))v=vs[i];if(v)u.voice=v;speechSynthesis.speak(u)},60)}catch(e){}}
+function spkRow(it){if(!spkOK())return '';var b=function(s,l){return '<button data-a="spk" data-s="'+s+'">🔊 '+l+'</button>'};
+var a=it.kind==='w'?[b('w','単語')].concat(it.w.ex?[b('e','例文')]:[]):it.kind==='e'?[b('e','例文'),b('w','単語')]:[b('d','派生語'),b('w','元の単語')];
+return '<div class="two" style="margin:12px 0 4px">'+a.join('')+'</div>'}
+try{document.addEventListener('click',function(){if(spkOK()){try{var u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(e){}}},{once:true})}catch(e){}
 function stMerge(a,b){var o={},ch=0,k;for(k in a)o[k]=a[k];for(k in b){var x=o[k],y=b[k];if(!x||(y&&(y.seen||0)>(x.seen||0))){o[k]=y;ch=1}}return {m:o,ch:ch}}
+function tout(p,ms){return Promise.race([p,new Promise(function(_,rj){setTimeout(function(){rj(new Error('timeout'))},ms)})])}
 function syncSoon(){if(!CL.col)return;clearTimeout(CL.t);CL.t=setTimeout(push,4000)}
 function tm(){var d=new Date();return d.getHours()+':'+('0'+d.getMinutes()).slice(-2)}
-async function push(){if(!CL.col)return;try{var ks=Object.keys(S.stats),n=700,cnt=0;for(var i=0;i<ks.length;i+=n){var c={};ks.slice(i,i+n).forEach(function(k){c[k]=S.stats[k]});await CL.col.doc('p'+cnt).set({s:c});cnt++}await CL.col.doc('meta').set({n:cnt,t:Date.now()});CL.st='on';CL.msg='最終同期 '+tm()}catch(e){CL.st='err';CL.msg=''}clShow()}
-async function pull(manual){try{var m=await CL.col.doc('meta').get(),r={};if(m.exists){var cnt=(m.data()||{}).n||0;for(var i=0;i<cnt;i++){var s=await CL.col.doc('p'+i).get();if(s.exists){var d=(s.data()||{}).s||{};for(var k in d)r[k]=d[k]}}}
+async function push(){if(!CL.col)return;if(navigator.onLine===false){CL.msg='オフラインです。つながったら自動で同期します。';clShow();return}try{var ks=Object.keys(S.stats),n=700,cnt=0;for(var i=0;i<ks.length;i+=n){var c={};ks.slice(i,i+n).forEach(function(k){c[k]=S.stats[k]});await tout(CL.col.doc('p'+cnt).set({s:c}),15000);cnt++}await tout(CL.col.doc('meta').set({n:cnt,t:Date.now()}),15000);CL.st='on';CL.msg='最終同期 '+tm()}catch(e){CL.st='err';CL.msg='同期できませんでした。しばらくしてから「今すぐ同期する」を押してください。'}clShow()}
+async function pull(manual){if(!CL.col)return;if(navigator.onLine===false){CL.msg='オフラインです。つながったら自動で同期します。';clShow();return}try{var m=await tout(CL.col.doc('meta').get(),15000),r={};if(m.exists){var cnt=(m.data()||{}).n||0;for(var i=0;i<cnt;i++){var s=await tout(CL.col.doc('p'+i).get(),15000);if(s.exists){var d=(s.data()||{}).s||{};for(var k in d)r[k]=d[k]}}}
 var mg=stMerge(S.stats,r);S.stats=mg.m;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
-await push();if(mg.ch&&['home','sec','mis','backup','words'].indexOf(V.name)>=0)render()}catch(e){CL.st='err';CL.msg='';clShow()}}
-(async function(){try{var c=window.claude;if(!c||!c.use)return;var db=await c.use('db'),us=await c.use('user');if(!db||!us)return;var id=await us.id();if(!id)return;CL.col=db.collection('data/users/'+id);CL.st='on';await pull()}catch(e){CL.st='err'}})();
+await push();if(mg.ch&&['home','sec','mis','backup','words'].indexOf(V.name)>=0)render()}catch(e){CL.st='err';CL.msg='同期できませんでした（オフラインかもしれません）。';clShow()}}
+(function(){if(typeof firebase==='undefined')return;try{firebase.initializeApp(FBCFG);AUTH=firebase.auth();var db=firebase.firestore();AUTH.onAuthStateChanged(function(u){if(u){CL.user=u.email||'ログイン中';CL.col=db.collection('users/'+u.uid+'/progress');CL.st='on';CL.msg='同期中…';auShow();pull()}else{CL.user=null;CL.col=null;CL.st='off';CL.msg='';auShow()}});window.addEventListener('online',function(){if(CL.col)pull()});document.addEventListener('visibilitychange',function(){if(!document.hidden&&CL.col)pull()})}catch(e){CL.st='err'}})();
 render();
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
 </body>
 </html>
