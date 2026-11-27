@@ -188,7 +188,7 @@ if(!L.length)h+='<div class="sub">単語がありません</div>';
 L.forEach(function(w){var t=st(w.id),k=status(w.id);
 h+='<div class="wl"><div class="row sp"><span><b>'+esc(w.en)+'</b><span class="tag">'+(k==='done'?'習得済み':k==='rev'?'要復習':'未学習')+'</span></span><span class="sub">'+(t.seen?pct(t.ok,t.seen)+'%':'―')+'</span></div><div class="sub">'+esc(w.ja)+(t.seen?'　／　'+t.ok+'/'+t.seen+'回'+(t.to?'　時間切れ '+t.to:''):'')+'</div></div>'});
 return h+'</div>'};
-R.backup=function(){return '<button class="link" data-a="home">‹ ホーム</button><h2>データの保存・復元</h2><div id="cl">'+auHtml()+'</div><div class="sub">進捗はこの端末のブラウザに自動保存されます。端末を変える時や念のためのバックアップには、下の文字列をコピーしてメモなどに保存し、復元時に貼り付けてください。</div><button class="full" data-a="export">バックアップ文字列を表示</button><textarea id="bk" placeholder="ここに表示／貼り付け"></textarea><button class="pri full" data-a="import">貼り付けた内容で復元（現在のデータは置き換わります）</button><div id="msg" class="sub"></div>'};
+R.backup=function(){return '<button class="link" data-a="home">‹ ホーム</button><h2>データの保存・復元</h2><div id="cl">'+auHtml()+'</div><div class="sub">進捗はこの端末のブラウザに自動保存されます。ログインしておくと、クラウドにも自動で保存され、端末を変えても引き継がれます。</div>'};
 
 function startTimer(){clearInterval(T.iv);var t0=performance.now();V.t0=t0;if(V.q[V.i].kind==='e')return;var b=document.getElementById('tb');
 T.iv=setInterval(function(){var e=performance.now()-t0;if(b)b.style.width=Math.max(0,100-e/LIMIT*100)+'%';if(e>=LIMIT){clearInterval(T.iv);answer(false,true,LIMIT)}},40)}

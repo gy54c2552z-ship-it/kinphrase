@@ -1,4 +1,4 @@
-var C='kinphrase-v7';
+var C='kinphrase-v9';
 var LOCAL=['./','index.html','manifest.json','icon-180.png','icon-192.png','icon-512.png'];
 var SDK=['app','auth','firestore'].map(function(n){return 'https://www.gstatic.com/firebasejs/10.12.2/firebase-'+n+'-compat.js'});
 self.addEventListener('install',function(e){
